@@ -1,4 +1,3 @@
-
 data class Parser<Token, T>(val parse: (List<Token>) -> ParseResult<Token, T>)
 
 // ParseResult is ParseError or Parsed(parsedValue, unParsedTail)

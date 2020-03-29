@@ -1,4 +1,16 @@
-
+// Parse sql query to data class SQLEntity or return null in case of failure
+// Grammar for queries:
+// <spaces> -> (' ')+
+// <query> -> <main query><tail query>
+// <main query> -> SELECT<spaces><fields><spaces>FROM<spaces><identifier><spaces>
+// <tail query> -> <where query><bound query>
+// <where query> -> (<spaces>WHERE<spaces><identifier><spaces><operator><spaces><number>) | ''
+// <operator> -> <> | > | <
+// <bounds query> -> <skip query><limit query>
+// <skip query> -> (<spaces>SKIP<spaces><number>) | ''
+// <limit query> -> (<spaces>LIMIT<spaces><number>) | ''
+// I used simplified SQL-grammar for this task, as in examples in task-explanation
+// Of course, SQL much more complicated
 fun parseSQL(sqlString: String): SQLEntity? {
     var currentString = sqlString
     val mainParseResult = parseSQLMainPart(currentString) ?: return null
@@ -38,13 +50,13 @@ data class SQLEntity(val tableName: String, val fieldNames: List<String>) {
 
 data class WhereCondition(val field: String, val value: Int, val operation: String)
 
-// Parse SELECT <some_fields> FROM <table_name>
+// Parse <main query>: SELECT <some_fields> FROM <table_name>
 fun parseSQLMainPart(sqlString: String): Pair<SQLEntity, String>? {
     val parseBase = stringParser("SELECT")
         .and(whileNotStringParser("FROM"))
         .andMore(stringParser("FROM"))
         .andMore(spaceParser())
-        .andMore(identificatorParser())
+        .andMore(identifierParser())
         .parse(sqlString.toList())
         .errorToNull() ?: return null
     val fieldNames = parseBase.result[1]
@@ -70,13 +82,13 @@ fun parseSQLMainPart(sqlString: String): Pair<SQLEntity, String>? {
     return Pair(SQLEntity(tableName, separatedNames), unParsedString)
 }
 
-// TODO: Parse boolean arithmetic
+// Parse <where query>: WHERE <name> (<> | < | >) <number>
 fun parseWhereSQL(sqlString: String): Pair<WhereCondition, String>? {
     val parseResult =
         spaceParser()
             .and(stringParser("WHERE"))
             .andMore(spaceParser())
-            .andMore(identificatorParser())
+            .andMore(identifierParser())
             .andMore(spaceParser())
             .andMore(stringParser("<>").or(stringParser("<").or(stringParser(">"))))
             .andMore(spaceParser())
@@ -93,7 +105,7 @@ fun parseWhereSQL(sqlString: String): Pair<WhereCondition, String>? {
     )
 }
 
-
+// Parse <command> = <number>
 fun parseResultBounds(sqlString: String, command: String): Pair<Int, String>? {
     val parseResult =
         spaceParser()

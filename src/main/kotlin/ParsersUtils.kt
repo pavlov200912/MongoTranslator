@@ -1,9 +1,10 @@
-
-
+// Parse (' ')+
 fun spaceParser(): Parser<Char, String> {
     fun parseSpaces(sequence: List<Char>): ParseResult<Char, String> {
         if (sequence.isEmpty())
             return EmptySeq<Char>()
+        if (sequence[0] != ' ')
+            return ParseExceptionMessage("space wasn't found in ${sequence}")
         return Parsed("",
             sequence.joinToString("").trimStart()
                 .toList())
@@ -14,8 +15,7 @@ fun spaceParser(): Parser<Char, String> {
     }
 }
 
-fun charParser(symbol: Char): Parser<Char, Char> = getSatisfyParser { it == symbol }
-
+// Parse string*  : eats string from beginning and returns everything after
 fun stringParser(string: String): Parser<Char, String> {
     fun parseString(sequence: List<Char>): ParseResult<Char, String> {
         if (sequence.joinToString("").startsWith(string)) {
@@ -28,13 +28,12 @@ fun stringParser(string: String): Parser<Char, String> {
     }
 }
 
+// Parse *string : eats everything before string and returns it
+// Returns input untouched if didn't found the stopString
 fun whileNotStringParser(stopString: String): Parser<Char, String> {
     fun parseWhileNotString(sequence: List<Char>): Parsed<Char, String> {
         if (stopString.isEmpty()) {
             return Parsed("", sequence)
-        }
-        if (sequence.size < stopString.length) {
-            return Parsed(sequence.joinToString(""), emptyList())
         }
         val stringSeq = sequence.joinToString("")
         val stringBeforeStop = stringSeq.substringBefore(stopString)
@@ -49,33 +48,27 @@ fun whileNotStringParser(stopString: String): Parser<Char, String> {
     }
 }
 
-fun <A> getSatisfyParser(predicate: (A) -> Boolean) : Parser<A, A>{
-    fun parseSatisfy(sequence: List<A>): ParseResult<A, A> {
-        if (sequence.isEmpty())
-            return EmptySeq<A>()
-        if (!predicate(sequence[0]))
-            return PredicateFailure<A>(sequence[0])
-        return Parsed<A, A>(sequence[0], sequence.drop(1))
-    }
-    return Parser({seq -> parseSatisfy(seq)})
-}
 
-fun someLettersParser(): Parser<Char, String> =
-    somePredicateParser<Char> { c -> c.isLetter() }.map { it -> it.joinToString ("") }
-
+// Parse (\d)+  : eats digits sequence and returns the rest
+// Not (\d)* ! Should be some digit in the beginning
 fun someDigitParser(): Parser<Char, String> =
     somePredicateParser<Char> { c -> c.isDigit() }.map { it -> it.joinToString ("") }
 
-// TODO:  Documentation
-fun identificatorParser(): Parser<Char, String> =
+// Parse ([a-z\\d_])+ : eats digits or letters or _ sequence and returns the rest
+// Not ([a-z\\d_])* ! Should be some digit or letter or _ in the beginning
+fun identifierParser(): Parser<Char, String> =
     somePredicateParser<Char> {c -> c.isLetter() or c.isDigit() or (c == '_')}.map{it.joinToString("")}
 
 
+// Parse values of type A in List<A> while predicate is truth
+// Require predicate from first element of sequence to be true
 fun <A> somePredicateParser(predicate: (A) -> Boolean): Parser<A, List<A>> {
     fun parseLetters(sequence: List<A>): ParseResult<A, List<A>> {
         if (sequence.isEmpty()) {
             return EmptySeq<Char>()
         }
+        if (!predicate(sequence[0]))
+            return ParseExceptionMessage("some predicate's true value expected but not found ${sequence}")
         return Parsed(
             sequence.takeWhile(predicate),
             sequence.dropWhile(predicate))
