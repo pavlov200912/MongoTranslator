@@ -1,16 +1,40 @@
-fun main() {
-    /*val str = "SELECT name, surname FROM collection"
-    val str2 = "SELECT * FROM customers WHERE age > 22"
-    val reg = Regex("SELECT")
-    val res =
-        stringParser("SELECT")
-        .and(whileNotStringParser("FROM"))
-        .andMore(stringParser("FROM"))
-        .andMore(spaceParser())
-        .andMore(someLettersParser())
-        .parse(str2.toList())
-*/
-    //println(res)
+import java.lang.Error
 
-    println(parseSQL( "SELECT * FROM customers WHERE age > 22  LIMIT 12") ?: "")
+fun main() {
+    val sqlString = readLine() ?: throw Error("Input error")
+    val res = parseSQL(sqlString) ?: throw Error("Can't parse SQLQuery")
+    println(buildMongo(res))
+}
+
+fun buildMongo(sql: SQLEntity): String{
+    var mongoQuery = "db."
+    mongoQuery += sql.tableName + ".find("
+    var mongoWhere = "{}"
+    if (sql.whereCondition != null) {
+        val op = when(sql.whereCondition!!.operation) {
+            "<>" -> "ne"
+            "<" -> "lt"
+            ">" -> "gt"
+            else -> ""
+        }
+        mongoWhere = "{ ${sql.whereCondition!!.field}: {\$$op: ${sql.whereCondition!!.value}} }"
+    }
+    mongoQuery += mongoWhere
+    var mongoFields = ""
+    if (sql.fieldNames != listOf("*")) {
+        mongoFields += ", {"
+        for (field in sql.fieldNames) {
+            mongoFields += field + ": 1, "
+        }
+        mongoFields = mongoFields.dropLast(2)
+        mongoFields += "}"
+    }
+    mongoQuery += mongoFields + ")"
+    if (sql.skipValue != null) {
+        mongoQuery += ".skip(${sql.skipValue})"
+    }
+    if (sql.limitValue != null) {
+        mongoQuery += ".limit(${sql.limitValue})"
+    }
+    return mongoQuery
 }
