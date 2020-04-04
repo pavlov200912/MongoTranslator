@@ -39,7 +39,7 @@ fun whileNotStringParser(stopString: String): Parser<Char, String> {
         val stringBeforeStop = stringSeq.substringBefore(stopString)
         if (stringBeforeStop.length == stringSeq.length)
             return Parsed(stringBeforeStop, emptyList())
-        return Parsed(stringSeq.substringBefore(stopString),
+        return Parsed(stringBeforeStop,
             (stopString + stringSeq.substringAfter(stopString)).toList())
     }
     return Parser{

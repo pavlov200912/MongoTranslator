@@ -1,16 +1,20 @@
-// Parse sql query to data class SQLEntity or return null in case of failure
-// Grammar for queries:
-// <spaces> -> (' ')+
-// <query> -> <main query><tail query>
-// <main query> -> SELECT<spaces><fields><spaces>FROM<spaces><identifier><spaces>
-// <tail query> -> <where query><bound query>
-// <where query> -> (<spaces>WHERE<spaces><identifier><spaces><operator><spaces><number>) | ''
-// <operator> -> <> | > | <
-// <bounds query> -> <skip query><limit query>
-// <skip query> -> (<spaces>SKIP<spaces><number>) | ''
-// <limit query> -> (<spaces>LIMIT<spaces><number>) | ''
-// I used simplified SQL-grammar for this task, as in examples in task-explanation
-// Of course, SQL much more complicated
+// TODO: Add to ReadMe
+/*** Parse sql query to data class SQLEntity or return null in case of failure
+ Grammar for queries:
+ <spaces> -> (' ')+
+ <space*> -> (' ')*
+ <query> -> <main query><tail query>
+ <main query> -> SELECT<spaces><fields><spaces>FROM<spaces><identifier><spaces>
+ <fileds> -> <spaces><name>(<comma name>)* <spaces> | <spaces>'*'<spaces>
+ <comma name> -> <space*>,<space*><name><space*>
+ <tail query> -> <where query><bound query>
+ <where query> -> (<spaces>WHERE<spaces><identifier><spaces><operator><spaces><number>) | ''
+ <operator> -> <> | > | <
+ <bounds query> -> <skip query><limit query>
+ <skip query> -> (<spaces>SKIP<spaces><number>) | ''
+ <limit query> -> (<spaces>LIMIT<spaces><number>) | ''
+ I used simplified SQL-grammar for this task, as in examples in task-explanation
+ Of course, SQL much more complicated*/
 fun parseSQL(sqlString: String): SQLEntity? {
     var currentString = sqlString
     val mainParseResult = parseSQLMainPart(currentString) ?: return null
@@ -52,25 +56,27 @@ data class WhereCondition(val field: String, val value: Int, val operation: Stri
 
 // Parse <main query>: SELECT <some_fields> FROM <table_name>
 fun parseSQLMainPart(sqlString: String): Pair<SQLEntity, String>? {
-    val parseBase = stringParser("SELECT")
-        .and(whileNotStringParser("FROM"))
+    val parseBase =
+        stringParser("SELECT")
+        .and(spaceParser())
+        .andMore(whileNotStringParser("FROM"))
         .andMore(stringParser("FROM"))
         .andMore(spaceParser())
         .andMore(identifierParser())
         .parse(sqlString.toList())
         .errorToNull() ?: return null
-    val fieldNames = parseBase.result[1]
-    val tableName = parseBase.result[4]
+    val fieldNames = parseBase.result[2]
+    val tableName = parseBase.result[5]
     val unParsedString = parseBase.remainder.joinToString("")
     // Parse fieldNames <name1>, <name2>, <name3> OR *
+
     val separatedNames = fieldNames.split(',').map{it.trim()}
     var isSelectAll: Boolean = false
-
     if (separatedNames.size == 1 && separatedNames[0] == "*")
         isSelectAll = true
     if (!isSelectAll) {
         separatedNames.forEach {
-            if (!it.all { c -> c.isLetter() })
+            if (identifierParser().parse(it.toList()) is ParseError)
                 return null
         }
     }
