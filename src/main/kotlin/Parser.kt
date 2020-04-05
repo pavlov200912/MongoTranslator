@@ -42,7 +42,7 @@ fun <Token, A> pure(value: A): Parser<Token, A> =
         Parsed<Token, A> (value, seq)
     }
 
-// Applicative Parsers is concept from Functional Programming language as Haskell
+// Applicative Parsers is concept from Functional Programming
 fun <Token, A, B> Parser<Token, (A) -> B>.app(parser: Parser<Token, A>): Parser<Token, B> {
     return Parser<Token, B> {
             seq ->
@@ -78,6 +78,7 @@ fun <Token, A> Parser<Token, A>.or(parser: Parser<Token, A>): Parser<Token, A> {
     }
 }
 
+// Using Applicative semantic to create chain of parsers
 fun <Token, A> Parser<Token, A>.and(parser: Parser<Token, A>): Parser<Token, MutableList<A>> {
     fun partialList(a: A) = {b: A -> mutableListOf(a, b) }
     return this.map {partialList(it)}.app(parser)

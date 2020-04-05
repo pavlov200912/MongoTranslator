@@ -1,20 +1,4 @@
-// TODO: Add to ReadMe
-/*** Parse sql query to data class SQLEntity or return null in case of failure
- Grammar for queries:
- <spaces> -> (' ')+
- <space*> -> (' ')*
- <query> -> <main query><tail query>
- <main query> -> SELECT<spaces><fields><spaces>FROM<spaces><identifier><spaces>
- <fileds> -> <spaces><name>(<comma name>)* <spaces> | <spaces>'*'<spaces>
- <comma name> -> <space*>,<space*><name><space*>
- <tail query> -> <where query><bound query>
- <where query> -> (<spaces>WHERE<spaces><identifier><spaces><operator><spaces><number>) | ''
- <operator> -> <> | > | <
- <bounds query> -> <skip query><limit query>
- <skip query> -> (<spaces>SKIP<spaces><number>) | ''
- <limit query> -> (<spaces>LIMIT<spaces><number>) | ''
- I used simplified SQL-grammar for this task, as in examples in task-explanation
- Of course, SQL much more complicated*/
+/* Parse sql query to data class SQLEntity or return null in case of failure*/
 fun parseSQL(sqlString: String): SQLEntity? {
     var currentString = sqlString
     val mainParseResult = parseSQLMainPart(currentString) ?: return null

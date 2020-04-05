@@ -6,6 +6,7 @@ fun main() {
     println(buildMongo(res))
 }
 
+// Build Mongo Query from SQLEntity (simple function, so implemented in main)
 fun buildMongo(sql: SQLEntity): String{
     var mongoQuery = "db."
     mongoQuery += sql.tableName + ".find("
