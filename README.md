@@ -1,4 +1,4 @@
- #Mongo Translator
+ # Mongo Translator
  
  Преобразует SELECT SQL запросы в диалект mongo. 
  
